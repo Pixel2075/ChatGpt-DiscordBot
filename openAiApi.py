@@ -6,16 +6,16 @@ from config import config
 TOKEN = config.TOKEN     
 URL = config.URL 
 
-def generateResponse(question:str,temp,prevConvo=None):
-    print(f"{prevConvo} {question}")
+def generateResponse(question:str,temp,userName:str,prevConvo=None):
+    print(f"{prevConvo}\n{userName}:{question}\nAI:")
     openai.api_key = TOKEN
     response = openai.Completion.create(
       model="text-davinci-003",
-      prompt=f"{prevConvo} {question}",
+      prompt=f"{prevConvo}\n{userName}:{question}\nAI:",
       temperature=int(float(temp)),
-      max_tokens=256,
+      max_tokens=3000,
       top_p=1.0,
-      frequency_penalty=0.0,
+      frequency_penalty=0.5,
       presence_penalty=0.0
     )
     print(response.choices[0].text)

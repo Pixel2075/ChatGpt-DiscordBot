@@ -16,17 +16,23 @@ async def connect():
         yield conn, cur
     conn.close()
 
-async def addEntry(userID,message: Message,channelID):
+async def addEntry(userID: str,channelID: str,message: Message,response: str):
     async with connect() as (conn, cur):
-            await cur.execute(f"INSERT INTO conversation_history (timestamp, user, ctx, message) VALUES (CURRENT_TIMESTAMP(), '{userID}', '{channelID}', '{message}')")
+            escapedMessage = aiomysql.escape_string(message)
+            truncatedMessage = escapedMessage[:255] 
+            await cur.execute(f"INSERT INTO conversation_history (timestamp, user, ctx, message,response) VALUES (CURRENT_TIMESTAMP(), '{userID}', '{channelID}', '{message}','{truncatedMessage}')")
 
-async def getPrev(userID,channelID):
+async def getPrev(userID: str,channelID: str,userName: str):
     async with connect() as (conn, cur):
-        sql = f"SELECT message FROM conversation_history WHERE user = {userID} AND ctx = {channelID} ORDER BY timestamp ASC"
+        sql = f"SELECT message,response FROM conversation_history WHERE user = {userID} AND ctx = {channelID} ORDER BY timestamp ASC"
         await cur.execute(sql)
-        conversation = " ".join([row[0] for row in await cur.fetchall()])
-        return conversation
+        conversation = await cur.fetchall()
+        convoDictList = [{'message':convo[0],'response':convo[1]} for convo in conversation]
+        convoStr = ""
+        for both in convoDictList:
+            convoStr += f'{userName}:{both["message"]}\nAI:{both["response"]}\n'
+        return convoStr
 
 # async def main():
-#     await addEntry('a','12')
+#     await getPrev('696248940810731541','1061819571146870804','Human')
 # asyncio.run(main())
